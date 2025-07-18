@@ -1,0 +1,17 @@
+@import url('https://fonts.googleapis.com/css2?family=DynaPuff:wght@400..700&display=swap');
+@import "tailwindcss";
+ @plugin "daisyui" {
+   themes: cupcake --default;
+ }
+
+@theme {
+  --font-display: "DynaPuff", sans-serif;
+
+
+}
+
+  @layer {
+    html {
+      font-family: var(--font-display);
+    }
+  }
