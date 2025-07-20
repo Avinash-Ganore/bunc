@@ -1,6 +1,7 @@
 import mongoose from "mongoose";
 import subjectSchema from "./subject.js";
 import timetableSlotSchema from "./timetable.js";
+import bcrypt from "bcrypt";
 
 const { Schema } = mongoose;
 
@@ -76,6 +77,23 @@ userSchema.virtual("overallAttendance").get(function () {
     if (total === 0) return 0;
     return ((attended / total) * 100).toFixed(2);
 });
+
+userSchema.pre("save", async function (next) {
+    if (!this.isModified("password")) {
+        return next();
+    }
+    try {
+        this.password = await bcrypt.hash(this.password, 10);
+        next();
+    } catch (error) {   
+        next(err);
+    }
+});
+
+userSchema.methods.matchPassword = async function (enteredPassword) {
+  return await bcrypt.compare(enteredPassword, this.password);
+};
+
 
 const User = mongoose.model("User", userSchema);
 
