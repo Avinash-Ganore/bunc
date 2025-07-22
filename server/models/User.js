@@ -56,9 +56,9 @@ const userSchema = new Schema(
                 type: Boolean,
                 default: true,
             },
-            remindBeforeMinutes: {
-                type: Number,
-                default: 15,
+            time: {
+                type: String,
+                default: "17:00",
             },
         },
     },

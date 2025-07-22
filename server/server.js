@@ -1,3 +1,4 @@
+
 import dotenv from "dotenv";
 dotenv.config();
 import express from "express";
@@ -106,7 +107,7 @@ app.post(
                 .json({ error: true, message: "Invalid credentials" });
 
         try {
-            const isMatch = await user.matchPassword(JSON.stringify(password));
+            const isMatch = await user.matchPassword(password);
             if (!isMatch)
                 return res
                     .status(400)
@@ -138,7 +139,12 @@ app.post(
     "/setup/subjects",
     authenticateUser,
     catchAsync(async (req, res) => {
-        //  [{name: "", professor:""}]
+    //    {
+    //   "subjects": [
+    //     { "name": "Math", "professor": "Dr. A"},
+    //     { "name": "Physics", "professor":"Dr. B" }
+    //          ]
+    //    }
         const { subjects } = req.body;
         try {
             const user = await User.findById(req.user.id);
@@ -170,6 +176,12 @@ app.post(
     "/setup/preferences",
     authenticateUser,
     catchAsync(async (req, res) => {
+        // {
+        //   "preferences": [
+        //     "boring",
+        //     "optional"
+        //   ]
+        // }
         const { preferences } = req.body; // expecting: ["important", "optional", ...]
 
         try {
@@ -196,7 +208,23 @@ app.post(
     })
 );
 
-app.post('/setup/timetable',authenticateUser,async (req, res) => {
+app.post('/setup/timetable',authenticateUser,  catchAsync(async (req, res) => {
+    // {
+    //   "timetable": [
+    //     {
+    //       "day": "monday",
+    //       "startTime": "09:00",
+    //       "endTime": "10:00",
+    //       "subject": "Maths"
+    //     },
+    //     {
+    //       "day": "tuesday",
+    //       "startTime": "10:00",
+    //       "endTime": "11:00",
+    //       "subject": "Physics"
+    //     }
+    //   ]
+    // }
   const { timetable } = req.body;
 
   try {
@@ -207,14 +235,48 @@ app.post('/setup/timetable',authenticateUser,async (req, res) => {
     const user = await User.findById(req.user.id);
     if (!user) return res.status(404).json({ message: "User not found" });
 
-    user.timetable = timetable; // 🔥 Overwrite old timetable or add new
+    user.timetable = timetable; //  Overwrite old timetable or add new
     await user.save();
 
     res.status(200).json({ message: "Timetable setup successful", user });
   } catch (err) {
     res.status(500).json({ error: "Server error", details: err.message });
   }
-});
+}));
+
+app.post('/setup/attendance-settings', authenticateUser, catchAsync(async (req, res) => {
+  try {
+    const {
+      attendanceThreshold,
+      notificationPreferences
+    } = req.body;
+
+    const user = await User.findById(req.user.id);
+
+    if (!user) return res.status(404).json({ message: 'User not found' });
+
+    // update attendance settings
+    if (attendanceThreshold !== undefined)
+      user.attendanceThreshold = attendanceThreshold;
+
+    if (notificationPreferences) {
+      if (notificationPreferences.enabled !== undefined)
+        user.notificationPreferences.enabled = notificationPreferences.enabled;
+
+      if (notificationPreferences.time)
+        user.notificationPreferences.time = notificationPreferences.time;
+    }
+
+    await user.save();
+
+    res.status(200).json({ message: 'Attendance settings updated successfully', user });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: 'Server error' });
+  }
+}));
+
+
 
 app.all(/.*/, (req, res, next) => {
     next(new ExpressError("Page Not Found", 404));

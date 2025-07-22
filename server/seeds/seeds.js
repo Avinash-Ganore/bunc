@@ -11,25 +11,46 @@ const seedDatabase = async () => {
     await mongoose.connect("mongodb://localhost:27017/bunk");
     console.log("Connected to MongoDB");
     await User.deleteMany({});
-    const hashedPassword = await bcrypt.hash('test1234', 10);
-
-    const testUserEmail = 'testuser@example.com';
+    const hashedPassword = await bcrypt.hash('password123', 10);
+    
+    const testUserEmail = 'john.doe@example.com';
 
     const existingUser = await User.findOne({ email: testUserEmail });
 
     const subjects = [
-      { name: "Data Structures", professor: "Dr. Sharma", preference: "important" },
-      { name: "Digital Circuits", professor: "Dr. Mehta", preference: "boring" },
-      { name: "Maths", professor: "Prof. Iyer", preference: "optional" },
+      {
+            name: "Math",
+            professor: "Dr. Smith",
+            preference: "important",
+            attendance: {
+                attended: 7,
+                total: 10,
+            },
+        },
+        {
+            name: "Physics",
+            professor: "Dr. Johnson",
+            preference: "optional",
+            attendance: {
+                attended: 5,
+                total: 8,
+            },
+        },
     ];
 
     const timetable = [
-      { day: "Monday", time: "09:00-10:00", subject: "Data Structures" },
-      { day: "Monday", time: "10:00-11:00", subject: "Maths" },
-      { day: "Tuesday", time: "09:00-10:00", subject: "Digital Circuits" },
-      { day: "Wednesday", time: "09:00-10:00", subject: "Data Structures" },
-      { day: "Thursday", time: "11:00-12:00", subject: "Maths" },
-      { day: "Friday", time: "10:00-11:00", subject: "Digital Circuits" }
+       {
+            day: "monday",
+            startTime: "09:00",
+            endTime: "10:00",
+            subject: "Math",
+        },
+        {
+            day: "tuesday",
+            startTime: "10:00",
+            endTime: "11:00",
+            subject: "Physics",
+        },
     ];
 
     if (existingUser) {
@@ -39,7 +60,7 @@ const seedDatabase = async () => {
       console.log("Mock data updated for existing user.");
     } else {
       await User.create({
-        name: "Test User",
+        name: "John Doe",
         email: testUserEmail,
         password: hashedPassword,
         department: "Computer Engineering",
