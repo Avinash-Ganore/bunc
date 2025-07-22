@@ -7,6 +7,7 @@ import mongoose from "mongoose";
 import User from "./models/User.js";
 import catchAsync from "./utils/catchAsync.js";
 import { generateToken } from "./utilities.js";
+import { authenticateUser } from "./utils/middleware.js";
 
 mongoose
     .connect(process.env.DB_URL, {
@@ -21,6 +22,7 @@ mongoose
 
 const app = express();
 
+app.use(cors());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(cors({ origin: "*" }));
@@ -96,7 +98,7 @@ app.post(
         const { email, password } = req.body;
 
         const user = await User.findOne({ email });
-        console.log("Found user:", user);
+        // console.log("Found user:", user);
 
         if (!user)
             return res
@@ -129,6 +131,38 @@ app.post(
                 rollNumber: user.rollNumber,
             },
         });
+    })
+);
+
+app.post(
+    "/setup/subjects",
+    authenticateUser,
+    catchAsync(async (req, res) => {
+        //  [{name: "", professor:""}]
+        const { subjects } = req.body;
+        try {
+            const user = await User.findById(req.user.id);
+            // console.log("Found user:", user);
+            // console.log([...subjects]);
+            if (!user)
+                return res
+                    .status(400)
+                    .json({ error: true, message: "User Not found" });
+
+            user.subjects = subjects;
+            await user.save();
+
+            return res.json({
+                error: false,
+                token: generateToken(user._id),
+                user: {
+                    subjects: user.subjects,
+                },
+                message: "Subjects setup successful",
+            });
+        } catch (error) {
+            console.error("Subject setup failed", error);
+        }
     })
 );
 

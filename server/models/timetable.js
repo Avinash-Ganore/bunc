@@ -7,20 +7,25 @@ Schema({
     day: {
         type: String,
         enum: [
-            "Monday",
-            "Tuesday",
-            "Wednesday",
-            "Thursday",
-            "Friday",
-            "Saturday",
+            "monday",
+            "tuesday",
+            "wednesday",
+            "thursday",
+            "friday",
+            "saturday",
         ],
         required: true,
     },
 
-    time: {
+    startTime: {
         type: String,
         required: true,
-    }, 
+    },
+
+    endTime: {
+        type: String,
+        required: true,
+    },
     // You could later split into startTime, endTime
     subject: { 
         type: String, 

@@ -4,6 +4,7 @@ export default function RegisterForm() {
     return (
         <div>
             <fieldset className="fieldset bg-base-200 border-base-300 rounded-box w-xs border p-4">
+                
                 <legend className="fieldset-legend">Register</legend>
 
                 <label className="label">Name</label>
@@ -13,6 +14,16 @@ export default function RegisterForm() {
                     placeholder="My awesome page"
                 />
 
+
+                <label className="label">Department</label>
+                <input type="text" className="input" placeholder="Department" />
+                
+                <label className="label">Year</label>
+                <input type="text" className="input" placeholder="year" />
+                
+                <label className="label">Roll Number</label>
+                <input type="text" className="input" placeholder="Roll Number" />
+
                 <label className="label">Email</label>
                 <input
                     type="text"
@@ -20,15 +31,9 @@ export default function RegisterForm() {
                     placeholder="my-awesome-page"
                 />
 
-                <label className="label">Department</label>
-                <input type="text" className="input" placeholder="Name" />
-                
-                <label className="label">Year</label>
-                <input type="text" className="input" placeholder="Name" />
-                
-                <label className="label">Roll Number</label>
-                <input type="text" className="input" placeholder="Name" />
-                
+                <label className="label">Password</label>
+                <input type="password" className="input" placeholder="Password" />
+
             </fieldset>
             
         </div>
