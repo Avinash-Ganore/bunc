@@ -196,6 +196,26 @@ app.post(
     })
 );
 
+app.post('/setup/timetable',authenticateUser,async (req, res) => {
+  const { timetable } = req.body;
+
+  try {
+    if (!Array.isArray(timetable)) {
+      return res.status(400).json({ message: "Timetable must be an array" });
+    }
+
+    const user = await User.findById(req.user.id);
+    if (!user) return res.status(404).json({ message: "User not found" });
+
+    user.timetable = timetable; // 🔥 Overwrite old timetable or add new
+    await user.save();
+
+    res.status(200).json({ message: "Timetable setup successful", user });
+  } catch (err) {
+    res.status(500).json({ error: "Server error", details: err.message });
+  }
+});
+
 app.all(/.*/, (req, res, next) => {
     next(new ExpressError("Page Not Found", 404));
 });
