@@ -166,7 +166,35 @@ app.post(
     })
 );
 
+app.post(
+    "/setup/preferences",
+    authenticateUser,
+    catchAsync(async (req, res) => {
+        const { preferences } = req.body; // expecting: ["important", "optional", ...]
 
+        try {
+            // Fetch the user
+            const user = await User.findById(req.user.id);
+            if (!user)
+                return res.status(404).json({ message: "User not found" });
+
+            // Update subject preferences
+            user.subjects.forEach((subject, index) => {
+                if (preferences[index]) {
+                    subject.preference = preferences[index];
+                }
+            });
+
+            await user.save();
+            res.status(200).json({
+                message: "Preferences updated successfully",
+                user,
+            });
+        } catch (err) {
+            res.status(500).json({ error: err.message });
+        }
+    })
+);
 
 app.all(/.*/, (req, res, next) => {
     next(new ExpressError("Page Not Found", 404));
