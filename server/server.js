@@ -1,4 +1,3 @@
-
 import dotenv from "dotenv";
 dotenv.config();
 import express from "express";
@@ -8,7 +7,9 @@ import mongoose from "mongoose";
 import User from "./models/User.js";
 import catchAsync from "./utils/catchAsync.js";
 import { generateToken } from "./utilities.js";
-import { authenticateUser } from "./utils/middleware.js";
+import { authenticateUser } from "./middlewares/authenticateUser.js";
+import ExpressError from "./utils/ExpressError.js";
+import cookieParser from "cookie-parser";
 
 mongoose
     .connect(process.env.DB_URL, {
@@ -23,16 +24,20 @@ mongoose
 
 const app = express();
 
-app.use(cors());
+app.use(
+    cors({
+        origin: "http://localhost:5173",
+        credentials: true,
+    })
+);
 app.use(express.json());
+app.use(cookieParser());
 app.use(express.urlencoded({ extended: true }));
-app.use(cors({ origin: "*" }));
 
 app.post(
     "/auth/signup",
     catchAsync(async (req, res) => {
-        const { name, email, password, department, year, rollNumber } =
-            req.body;
+        const { name, email, password, department, year, rollNumber } = req.body;
 
         if (
             !name ||
@@ -70,9 +75,20 @@ app.post(
                     .json({ error: true, message: "User not created" });
             }
 
-            res.status(201).json({
+            const token = generateToken(user._id);
+
+            const isProduction = process.env.NODE_ENV === "production";
+
+            res.cookie("token", token, {
+                httpOnly: true,
+                secure: false, //NOTES: set true in production
+                sameSite: isProduction ? "None" : "Lax",
+                maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
+            });
+
+            return res.status(201).json({
                 error: false,
-                token: generateToken(user._id),
+                token: token,
                 user: {
                     id: user._id,
                     name: user.name,
@@ -85,7 +101,7 @@ app.post(
             });
         } catch (error) {
             console.error("Signup error:", error);
-            res.status(500).json({
+            return res.status(500).json({
                 error: true,
                 message: "Internal Server Error",
             });
@@ -120,9 +136,20 @@ app.post(
             });
         }
 
+        const token = generateToken(user._id);
+
+        const isProduction = process.env.NODE_ENV === "production";
+
+        res.cookie("token", token, {
+            httpOnly: true,
+            secure: false, //NOTES: set true in production
+            sameSite: isProduction ? "None" : "Lax",
+            maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
+        });
+
         res.json({
             error: false,
-            token: generateToken(user._id),
+            token: token,
             user: {
                 id: user._id,
                 name: user.name,
@@ -139,12 +166,12 @@ app.post(
     "/setup/subjects",
     authenticateUser,
     catchAsync(async (req, res) => {
-    //    {
-    //   "subjects": [
-    //     { "name": "Math", "professor": "Dr. A"},
-    //     { "name": "Physics", "professor":"Dr. B" }
-    //          ]
-    //    }
+        //    {
+        //   "subjects": [
+        //     { "name": "Math", "professor": "Dr. A"},
+        //     { "name": "Physics", "professor":"Dr. B" }
+        //          ]
+        //    }
         const { subjects } = req.body;
         try {
             const user = await User.findById(req.user.id);
@@ -208,75 +235,93 @@ app.post(
     })
 );
 
-app.post('/setup/timetable',authenticateUser,  catchAsync(async (req, res) => {
-    // {
-    //   "timetable": [
-    //     {
-    //       "day": "monday",
-    //       "startTime": "09:00",
-    //       "endTime": "10:00",
-    //       "subject": "Maths"
-    //     },
-    //     {
-    //       "day": "tuesday",
-    //       "startTime": "10:00",
-    //       "endTime": "11:00",
-    //       "subject": "Physics"
-    //     }
-    //   ]
-    // }
-  const { timetable } = req.body;
+app.post(
+    "/setup/timetable",
+    authenticateUser,
+    catchAsync(async (req, res) => {
+        // {
+        //   "timetable": [
+        //     {
+        //       "day": "monday",
+        //       "startTime": "09:00",
+        //       "endTime": "10:00",
+        //       "subject": "Maths"
+        //     },
+        //     {
+        //       "day": "tuesday",
+        //       "startTime": "10:00",
+        //       "endTime": "11:00",
+        //       "subject": "Physics"
+        //     }
+        //   ]
+        // }
+        const { timetable } = req.body;
 
-  try {
-    if (!Array.isArray(timetable)) {
-      return res.status(400).json({ message: "Timetable must be an array" });
-    }
+        try {
+            if (!Array.isArray(timetable)) {
+                return res
+                    .status(400)
+                    .json({ message: "Timetable must be an array" });
+            }
 
-    const user = await User.findById(req.user.id);
-    if (!user) return res.status(404).json({ message: "User not found" });
+            const user = await User.findById(req.user.id);
+            if (!user)
+                return res.status(404).json({ message: "User not found" });
 
-    user.timetable = timetable; //  Overwrite old timetable or add new
-    await user.save();
+            user.timetable = timetable; //  Overwrite old timetable or add new
+            await user.save();
 
-    res.status(200).json({ message: "Timetable setup successful", user });
-  } catch (err) {
-    res.status(500).json({ error: "Server error", details: err.message });
-  }
-}));
+            res.status(200).json({
+                message: "Timetable setup successful",
+                user,
+            });
+        } catch (err) {
+            res.status(500).json({
+                error: "Server error",
+                details: err.message,
+            });
+        }
+    })
+);
 
-app.post('/setup/attendance-settings', authenticateUser, catchAsync(async (req, res) => {
-  try {
-    const {
-      attendanceThreshold,
-      notificationPreferences
-    } = req.body;
+app.post(
+    "/setup/attendance-settings",
+    authenticateUser,
+    catchAsync(async (req, res) => {
+        try {
+            const { attendanceThreshold, notificationPreferences } = req.body;
 
-    const user = await User.findById(req.user.id);
+            const user = await User.findById(req.user.id);
 
-    if (!user) return res.status(404).json({ message: 'User not found' });
+            if (!user)
+                return res.status(404).json({ message: "User not found" });
 
-    // update attendance settings
-    if (attendanceThreshold !== undefined)
-      user.attendanceThreshold = attendanceThreshold;
+            // update attendance settings
+            if (attendanceThreshold !== undefined)
+                user.attendanceThreshold = attendanceThreshold;
 
-    if (notificationPreferences) {
-      if (notificationPreferences.enabled !== undefined)
-        user.notificationPreferences.enabled = notificationPreferences.enabled;
+            if (notificationPreferences) {
+                if (notificationPreferences.enabled !== undefined)
+                    user.notificationPreferences.enabled =
+                        notificationPreferences.enabled;
 
-      if (notificationPreferences.time)
-        user.notificationPreferences.time = notificationPreferences.time;
-    }
+                if (notificationPreferences.time)
+                    user.notificationPreferences.time =
+                        notificationPreferences.time;
+            }
 
-    await user.save();
+            await user.save();
 
-    res.status(200).json({ message: 'Attendance settings updated successfully', user });
-  } catch (err) {
-    console.error(err);
-    res.status(500).json({ message: 'Server error' });
-  }
-}));
-
-
+            res.status(200).json({
+                message: "Attendance settings updated successfully",
+                user,
+            });
+        } catch (err) {
+            console.error(err);
+            res.status(500).json({ message: "Server error" });
+        }
+    })
+);
 
 app.all(/.*/, (req, res, next) => {
     next(new ExpressError("Page Not Found", 404));
