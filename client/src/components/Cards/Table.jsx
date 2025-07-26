@@ -10,7 +10,7 @@ export default function Subjects() {
   useEffect(() => {
     const fetchSubjects = async () => {
       try {
-        const res = await api.get("/setup/preferences"); // adjust this route if needed
+        const res = await api.get("/user/subjects"); // adjust this route if needed
         setRows(
           res.data.map((subject, index) => ({
             id: index + 1,
