@@ -1,5 +1,6 @@
 import React from 'react'
-import Table from '../../components/Cards/Table'
+import Table from '../../components/Input/Table'
+
 
 export default function Preference() {
   return (

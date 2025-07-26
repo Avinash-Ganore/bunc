@@ -24,7 +24,7 @@ export default function App() {
                 <Route path="/setup">
                     <Route path="preference" element={<Preference />} />
                     <Route path="subjects" element={<Subjects />} />
-                    <Route path="threshold" element={<Threshold />} />
+                    <Route path="attendance-settings" element={<Threshold />} />
                     <Route path="timetable" element={<Timetable />} />
                     <Route path="start">
                         <Route index element={<CollegeStart />} />

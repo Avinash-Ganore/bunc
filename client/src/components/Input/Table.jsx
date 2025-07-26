@@ -53,7 +53,7 @@ export default function Subjects() {
 
   return (
     <div className="w-full flex flex-col items-center mt-10 px-4">
-      <div className="overflow-x-auto rounded-box border border-base-800 border-base-content/5 bg-base-100 w-full max-w-4xl">
+      <div className="overflow-x-auto rounded-box border border-base-800 border-base-content/5 shadow-md bg-base-100 w-full max-w-4xl">
         <table className="table">
           <thead>
             <tr>
