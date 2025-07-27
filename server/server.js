@@ -367,9 +367,48 @@ app.get("/timetable/today",authenticateUser, async (req, res) => {
 });
 
 
-app.all(/.*/, (req, res, next) => {
-    next(new ExpressError("Page Not Found", 404));
-});
+app.post("/timetable/today", authenticateUser, async (req, res) => {
+    // req.body
+    // {
+    //   attendedlectures : [Math, English],
+    //   unattendedLLectures : [emft, DBMS]
+    // }
+    console.log(req.body);
+    const { attendedLectures, unattendedLectures } = req.body;
+    console.log(attendedLectures, unattendedLectures);
+    const userId = req.user.id;
+    const user = await User.findById(userId);
+    if (!user) {
+        return res.status(404).json({ message: "User not found" });
+    }
+    
+    user.dailyAttendance.push({
+        Date: new Date().setHours(0, 0, 0, 0),
+        lecturesAttended: attendedLectures,
+    })
+
+    user.subjects.map((subject) => {
+        attendedLectures.map((attendedLecture) => {
+            if (subject.name === attendedLecture) {
+                subject.subjectAttendance.attended++;
+                subject.subjectAttendance.total++;
+            }   
+        })
+        unattendedLectures.map((unattendedLecture) => {
+            if (subject.name === unattendedLecture) {
+                subject.subjectAttendance.total++;
+            }   
+        })
+    })
+
+    await user.save();
+    res.json(user);
+})
+
+
+// app.all(/.*/, (req, res, next) => {
+//     next(new ExpressError("Page Not Found", 404));
+// });
 
 // app.use((err, req, res, next) => {
 //     const { statusCode = 500 } = err;

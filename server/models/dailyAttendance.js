@@ -11,7 +11,7 @@ const attendanceSchema = new mongoose.Schema({
     type: [String], // or [{ subjectName: String }] etc.
     default: [],
   },
-});
+},{ _id: false });
 
 attendanceSchema.virtual('totalLectures').get(function () {
   return this.lecturesAttended.length;
@@ -23,4 +23,4 @@ attendanceSchema.set('toJSON', { virtuals: true });
 
 
 
-export default Attendance;
+export default attendanceSchema;

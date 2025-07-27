@@ -74,11 +74,11 @@ const userSchema = new Schema(
 
 userSchema.virtual("overallAttendance").get(function () {
     const total = this.subjects.reduce(
-        (acc, sub) => acc + sub.attendance.total,
+        (acc, sub) => acc + sub.subjectAttendance.total,
         0
     );
     const attended = this.subjects.reduce(
-        (acc, sub) => acc + sub.attendance.attended,
+        (acc, sub) => acc + sub.subjectAttendance.attended,
         0
     );
     if (total === 0) return 0;
