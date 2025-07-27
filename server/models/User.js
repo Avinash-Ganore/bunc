@@ -2,6 +2,7 @@ import mongoose from "mongoose";
 import subjectSchema from "./subject.js";
 import timetableSlotSchema from "./timetable.js";
 import bcrypt from "bcrypt";
+import attendanceSchema from "./dailyAttendance.js";
 
 const { Schema } = mongoose;
 
@@ -51,6 +52,8 @@ const userSchema = new Schema(
 
         timetable: [timetableSlotSchema],
 
+        dailyAttendance: [attendanceSchema],
+
         notificationPreferences: {
             enabled: {
                 type: Boolean,
@@ -62,7 +65,11 @@ const userSchema = new Schema(
             },
         },
     },
-    { timestamps: true }
+    {
+        timestamps: true,
+        toJSON: { virtuals: true },
+        toObject: { virtuals: true },
+    }
 );
 
 userSchema.virtual("overallAttendance").get(function () {
@@ -85,15 +92,14 @@ userSchema.pre("save", async function (next) {
     try {
         this.password = await bcrypt.hash(this.password, 10);
         next();
-    } catch (error) {   
+    } catch (error) {
         next(err);
     }
 });
 
 userSchema.methods.matchPassword = async function (enteredPassword) {
-  return await bcrypt.compare(enteredPassword, this.password);
+    return await bcrypt.compare(enteredPassword, this.password);
 };
-
 
 const User = mongoose.model("User", userSchema);
 

@@ -19,7 +19,7 @@ const subjectSchema = new Schema({
         default: "important",
     },
 
-    attendance: {
+    subjectAttendance: {
         attended: { 
             type: Number, 
             default: 0 
