@@ -101,21 +101,21 @@ export default function LoginForm() {
                             type="password"
                             required
                             placeholder="Password"
-                            minLength="8"
-                            pattern="(?=.*\d)(?=.*[a-z])(?=.*[A-Z]).{8,}"
-                            title="Must be more than 8 characters, including number, lowercase letter, uppercase letter"
+                            // minLength="8"
+                            // pattern="(?=.*\d)(?=.*[a-z])(?=.*[A-Z]).{8,}"
+                            // title="Must be more than 8 characters, including number, lowercase letter, uppercase letter"
                             name="password"
                             value={formData.password}
                             onChange={handleChange}
                         />
                     </label>
-                    <p className="validator-hint hidden">
+                    {/* <p className="validator-hint hidden">
                         Must be more than 8 characters, including
                         <br />
                         At least one number <br />
                         At least one lowercase letter <br />
                         At least one uppercase letter
-                    </p>
+                    </p> */}
 
                     <button className="btn btn-neutral mt-4">Login</button>
 

@@ -334,16 +334,48 @@ app.post(
         }
     })
 );
+// GET /api/timetable/today
+app.get("/timetable/today",authenticateUser, async (req, res) => {
+  const userId = req.user.id;
+  const day = new Date(Date.now()+1000*60*60*24).toLocaleDateString("en-US", { weekday: "long" });
+  console.log(day); // e.g., "Monday"
+  
+  const user = await User.findById(userId);
+  if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+  const todayTimetable = user.timetable.filter((s) => s.day === day);
+  const subjects = user.subjects;
+  
+  const timetableSubjects = todayTimetable.map((s) => {
+      return {
+          subject: s.subject,
+          id : s._id
+      }
+  });
+  timetableSubjects.map((s) => {
+      subjects.filter((sub) => {
+          if (sub.name === s.subject) {
+              s.professor = sub.professor;
+          }
+      })
+  })
+  console.log(timetableSubjects);
+  
+
+  res.json(timetableSubjects);
+});
+
 
 app.all(/.*/, (req, res, next) => {
     next(new ExpressError("Page Not Found", 404));
 });
 
-app.use((err, req, res, next) => {
-    const { statusCode = 500 } = err;
-    if (!err.message) err.message = "Something went wrong!";
-    res.status(statusCode).json("error", { err });
-});
+// app.use((err, req, res, next) => {
+//     const { statusCode = 500 } = err;
+//     if (!err.message) err.message = "Something went wrong!";
+//     res.status(statusCode).json("error", { err });
+// });
 
 app.listen(3000, () => {
     console.log("Server is running on port 3000");

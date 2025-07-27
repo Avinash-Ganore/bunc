@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import api from "../../utils/api";
 
-const days = ["monday", "tuesday", "wednesday", "thursday", "friday", "saturday", "sunday"];
+const days =["Monday","Tuesday","Wednesday","Thursday","Friday","Saturday"];
 
 export default function TimetableComponent() {
     const [rows, setRows] = useState([{ id: 1, day: "", subject: "", startTime: "", endTime: "" }]);
