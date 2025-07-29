@@ -415,6 +415,17 @@ app.post("/timetable/today", authenticateUser, async (req, res) => {
     res.json(user);
 });
 
+app.get("/dashboard/overallprogress", authenticateUser, async (req, res) => {
+    const userId = req.user.id;
+    const user = await User.findById(userId);
+    if (!user) {
+        return res.status(404).json({ message: "User not found" });
+    }
+
+    res.json(user.overallAttendance);
+    
+})
+
 // app.all(/.*/, (req, res, next) => {
 //     next(new ExpressError("Page Not Found", 404));
 // });

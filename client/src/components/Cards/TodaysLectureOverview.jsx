@@ -74,7 +74,7 @@ export default function TodayLectureTable() {
     };
 
     return (
-        <div className="flex justify-center items-center h-screen">
+        <div className="flex justify-end items-center w-fit mr-20 bg-yellow-400 ">
             <div className="overflow-x-auto bg-base-100 shadow-lg rounded-xl p-4 w-2xs">
                 {loading ? (
                     <div className="flex justify-center items-center">
