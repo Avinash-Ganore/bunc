@@ -6,7 +6,7 @@ import bcrypt from "bcrypt";
 import mongoose from "mongoose";
 import User from "./models/User.js";
 import catchAsync from "./utils/catchAsync.js";
-import { generateToken, getTodayDate } from "./utilities.js";
+import { generateToken } from "./utilities.js";
 import { authenticateUser } from "./middlewares/authenticateUser.js";
 import ExpressError from "./utils/ExpressError.js";
 import cookieParser from "cookie-parser";
@@ -337,10 +337,7 @@ app.post(
 // GET /api/timetable/today
 app.get("/timetable/today", authenticateUser, async (req, res) => {
     const userId = req.user.id;
-    const day = new Date().toLocaleDateString(
-        "en-US",
-        { weekday: "long" }
-    );
+    const day = new Date().toLocaleDateString("en-US", { weekday: "long" });
     // console.log(day); // e.g., "Monday"
 
     const user = await User.findById(userId);
@@ -369,11 +366,11 @@ app.get("/timetable/today", authenticateUser, async (req, res) => {
 app.post("/timetable/today", authenticateUser, async (req, res) => {
     // req.body
     // {
-    //   attendedlectures : [Math, English],
-    //   unattendedLLectures : [emft, DBMS]
+    //   "attendedLectures" : ["Math", "English"],
+    //   "unattendedLectures" : ["emft", "DBMS"]
     // }
+    
     const { attendedLectures, unattendedLectures } = req.body;
-    const today = getTodayDate();
     const userId = req.user.id;
 
     const user = await User.findById(userId);
@@ -382,37 +379,50 @@ app.post("/timetable/today", authenticateUser, async (req, res) => {
         return res.status(404).json({ message: "User not found" });
     }
 
-    const alreadyMarked = user.dailyAttendance
-        .map((entry) => entry.date.toISOString().split("T")[0])
-        .some((entry) => entry === today);
+    try {
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
 
-    if (alreadyMarked) {
-        return res
-            .status(409)
-            .json({ message: "Attendance already marked for today." });
+
+        const alreadyMarked = user.dailyAttendance.some((entry) => {
+            const entryDate = new Date(entry.date);
+            entryDate.setHours(0, 0, 0, 0);
+            console.log(entryDate);
+            return entryDate.getTime() === today.getTime();
+        });
+
+        if (alreadyMarked) {
+            return res
+                .status(409)
+                .json({ message: "Attendance already marked for today." });
+        }
+        const istDate = new Date();
+        istDate.setHours(0, 0, 0, 0);
+
+        user.dailyAttendance.push({
+            Date: istDate,
+            lecturesAttended: attendedLectures,
+        });
+
+        user.subjects.map((subject) => {
+            attendedLectures.map((attendedLecture) => {
+                if (subject.name === attendedLecture) {
+                    subject.subjectAttendance.attended++;
+                    subject.subjectAttendance.total++;
+                }
+            });
+            unattendedLectures.map((unattendedLecture) => {
+                if (subject.name === unattendedLecture) {
+                    subject.subjectAttendance.total++;
+                }
+            });
+        });
+
+        await user.save();
+        return res.json(user);
+    } catch (error) {
+        res.status(500).json({ message: "Server error" });
     }
-
-    user.dailyAttendance.push({
-        Date: new Date().setHours(0, 0, 0, 0),
-        lecturesAttended: attendedLectures,
-    });
-
-    user.subjects.map((subject) => {
-        attendedLectures.map((attendedLecture) => {
-            if (subject.name === attendedLecture) {
-                subject.subjectAttendance.attended++;
-                subject.subjectAttendance.total++;
-            }
-        });
-        unattendedLectures.map((unattendedLecture) => {
-            if (subject.name === unattendedLecture) {
-                subject.subjectAttendance.total++;
-            }
-        });
-    });
-
-    await user.save();
-    res.json(user);
 });
 
 app.get("/dashboard/overallprogress", authenticateUser, async (req, res) => {
@@ -423,8 +433,16 @@ app.get("/dashboard/overallprogress", authenticateUser, async (req, res) => {
     }
 
     res.json(user.overallAttendance);
-    
-})
+});
+
+app.get("/dashboard/attendanceprogress", authenticateUser, async (req, res) => {
+    const userId = req.user.id;
+    const user = await User.findById(userId);
+    if (!user) {
+        return res.status(404).json({ message: "User not found" });
+    }
+    res.json(user.dailyAttendance);
+});
 
 // app.all(/.*/, (req, res, next) => {
 //     next(new ExpressError("Page Not Found", 404));

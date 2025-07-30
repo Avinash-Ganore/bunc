@@ -2,7 +2,7 @@ import mongoose from "mongoose";
 
 const { Schema } = mongoose;
 
-const attendanceSchema = new mongoose.Schema({
+const attendanceSchema = new Schema({
   date: {
     type: Date,
     default: () => new Date().setHours(0, 0, 0, 0),
